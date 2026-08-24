@@ -1,0 +1,15 @@
+build*/
+*.o
+*.obj
+*.exe
+*.so
+*.so.*
+*.a
+moc_*
+qrc_*
+Makefile
+Makefile.*
+*.user
+*.user.*
+ui_*.h
+.goutputstream*

@@ -1,0 +1,294 @@
+#ifndef GPS_H
+#define GPS_H
+
+#include <QVector>
+#include <QQuaternion>
+#include <QMatrix>
+#include <QDebug>
+
+//Струтура бинарного протокола GPS NAV_PVT Автор Iforce2d
+
+const unsigned char UBX_HEADER[]     = { 0xB5, 0x62 };
+const unsigned char NAV_PVT_HEADER[] = { 0x01, 0x07 };
+const unsigned char NAV_SOL_HEADER[] = { 0x01, 0x06 };
+
+struct NAV_PVT {
+  unsigned char cls;
+  unsigned char id;
+  unsigned short len;
+  unsigned long iTOW;          // GPS время навигационной эпохи (ms)
+
+  unsigned short year;         // Год (UTC)
+  unsigned char month;         // Месяц, от 1..12 (UTC)
+  unsigned char day;           // День, от 1..31 (UTC)
+  unsigned char hour;          // Час, от 0..23 (UTC)
+  unsigned char minute;        // Минута, от 0..59 (UTC)
+  unsigned char second;        // Секунда , от 0..60 (UTC)
+  char valid;                  // Флаги валидности
+  unsigned long tAcc;          // Оценка точности времени (UTC) (ns)
+  long nano;                   // Доля секунды, диапазон -1e9 .. 1e9 (UTC) (ns)
+  unsigned char fixType;       // Тип GNSSfix, диапазон 0..5
+  char flags;                  // Исправленый Флаг Состояния
+  unsigned char flags2;        // Дпополнительный флаг
+  unsigned char numSV;         // Количество спутников, используемых в решении навигации
+
+  long lon;                    // Долгота (deg)
+  long lat;                    // Широта (deg)
+  long height;                 // Высота над эллипсоидом (mm)
+  long hMSL;                   // Высота над уровнем моря  (mm)
+  unsigned long hAcc;          // Оценка Горизонтальной Точности (mm)
+  unsigned long vAcc;          // Оценка Вертикальной Точности (mm)
+
+  long velN;                   // NED Северная скорость (mm/s)
+  long velE;                   // NED Восточная скорость (mm/s)
+  long velD;                   // NED Скорсть спуска (mm/s)
+  long gSpeed;                 // Путевая скорость (2-D) (mm/s)
+  long heading;                // Направление движения (Курс) 2-D (deg)
+  unsigned long sAcc;          // Оценка Точности Скорости
+  unsigned long headingAcc;    // Оценка Точности Курса
+  unsigned short pDOP;         // Погрешность определения планового положения
+  unsigned char reserved1[6];  // Зарезервировано
+  long headVeh;                // Направление транспортного средства (2-D)
+  signed short magDec;         // Магнитное склонение
+  unsigned short  magAcc;      // Точность магнитного склонения
+};
+
+//struct NAV_SOL {
+//  unsigned long iTOW;          // Время недели эпохи навигации
+//  long fTOW;                   // Дробная часть iTOW
+//  short week;                  // Номер недели эпохи навигации
+//  unsigned char gpsFix;        // Тип позиции GPS 2D-Fix, 3D-Fix, GNSS + dead reckoning
+//  char flags;                  // Флаги валидности
+//  long ECEF_X;                 // Координата X ECEF (m, cm)
+//  long ECEF_Y;                 // Координата Y ECEF (m, cm)
+//  long ECEF_Z;                 // Координата Z ECEF (m, cm)
+//  unsigned long pAcc;          // Оценка Горизонтальной Точности (m, cm)
+//  long ECEF_VEL_X;             // Скорость X ECEF (m, cm)
+//  long ECEF_VEL_Y;             // Скорость Y ECEF (m, cm)
+//  long ECEF_VEL_Z;             // Скорость Z ECEF (m, cm)
+//  unsigned long sAcc;          // Оценка Точности Скорости (m, cm)
+//  unsigned short pDOP;         // Погрешность определения планового положения
+//  unsigned char reserved1;     // Зарезервировано
+//  unsigned char numSV;         // Количество спутников, используемых в решении навигации
+//  unsigned long reserved2;     // Зарезервtatusировано
+//};
+
+//union UBXMessage {
+//  NAV_PVT pvt;
+//  NAV_SOL sol;
+//};
+
+struct SI { // Перевод в СИ
+
+  double lon = 0.0;
+  double lat = 0.0;
+  double raw_lon = 0.0;
+  double raw_lat = 0.0;
+  float heading = 0.0f;
+  float headingAcc = 0.0f;
+  float g_speed = 0.0f;
+
+  float N_vel = 0.0f;
+  float E_vel = 0.0f;
+  float D_vel = 0.0f;
+
+  float h_acc = 0.0f;
+
+};
+
+
+struct MOVE { //хранит точку мгновенного премещения
+
+  double lon = 0;
+  double lat = 0;
+  int16_t alt = 0;
+  uint8_t climb = 0;
+  uint8_t type_point = 0;
+  uint8_t radius_point = 0;
+  uint8_t radius_circl = 0;
+
+};
+
+struct ROUT { //хранит точку полётного маршрута
+
+ double lon = 0;
+ double lat = 0;
+ int16_t alt = 0;
+ uint8_t climb = 0;
+ uint8_t type_point = 0;
+ uint8_t radius_point = 0;
+ uint8_t radius_circl = 0;
+};
+
+struct Current_pos {  //Хранит данные по которым аппарат летит в данный момент
+
+  double lon = 0;
+  double lat = 0;
+  double previus_lon = 0;
+  double previus_lat = 0;
+  int16_t alt =0;
+  uint8_t climb = 0;
+  uint8_t type_point = 0;
+  uint8_t radius_point = 0;
+  uint8_t radius_circl =0;
+  int16_t rout_count = 0;
+  uint8_t move_count = 0;
+  uint8_t fly_point = 0;
+  uint16_t rout_length = 0;
+};
+
+struct Telemetry_wlan //Телеметрия для отправки в MapGraphics
+{
+  double lon = 0;
+  double lat = 0;
+  float altitude = 0.0f;
+  float g_speed = 0.0f;
+  float dist_to_point = 0.0f;
+  float mismatch = 0.0f;
+  int16_t pitch = 0;
+  int16_t roll = 0;
+  int16_t yaw = 0;
+  int16_t gps_mismatch = 0;
+  uint8_t cal_system = 0;
+  uint8_t cal_gyro = 0;
+  uint8_t cal_accel = 0;
+  uint8_t cal_mag = 0;
+
+};
+
+struct Move // Задачи для стабилизации
+{
+ int16_t azimut = 0;
+ int16_t alt = 0;
+ uint8_t climb = 0;
+ uint8_t type_point = 0;
+};
+
+struct PID_ // настрйки пид
+{
+
+ float P_Alt = 0.0f; //0.5f;
+ float D_Alt = 0.0f; //1.0f;
+
+ float P_Bank = 0.0f; //0.5f;
+ float D_Bank = 0.0f; //1.0f;
+
+ float P_Pitch = 0.0f; //3.0f;
+ float P_Roll =  0.0f; //2.0f;
+ float P_Yaw = 0.0f; //2.0f;
+
+ float D_Pitch = 0.0f; //2.0f;
+ float D_Roll = 0.0f; //2.0f;
+ float D_Yaw = 0.0f; //2.0f;
+
+};
+
+struct Trimm_ // настройки тримирования рулей
+{
+
+ float Left_V_Tail = 0.0f; //0.5f;
+ float Right_V_Tail = 0.0f; //1.0f;
+
+ float Left_Eleron = 0.0f; //0.5f;
+ float Right_Eleron = 0.0f; //1.0f;
+
+ float Magnetick_decclination = 0.0f;
+ float Offset_pitch = 0.0f;
+ float Offset_roll = 0.0f;
+
+};
+
+struct Limit_ //
+{
+
+ float Pitch_Max = 0.0f;
+ float Pitch_Min = 0.0f;
+
+ float Roll_Max = 0.0f;
+ float Roll_Min = 0.0f;
+
+ float Yaw_Max = 0.0f;
+ float Yaw_Min = 0.0f;
+
+ float Bank_Max = 0.0f;
+ float Bank_Min = 0.0f;
+
+ float Error_Pitch_Max = 0.0f;
+ float Error_Pitch_Min = 0.0f;
+
+ float Error_Roll_Max = 0.0f;
+ float Error_Roll_Min = 0.0f;
+
+ float Error_Yaw_Max = 0.0f;
+ float Error_Yaw_Min = 0.0f;
+
+};
+
+struct GPS_to__SLAM
+{
+  QQuaternion rotation;
+  QVector3D positional;
+};
+
+struct Current_attitude
+{
+ float altitude_compensated_lidar_bar = 0.0f;         //Текущая высота
+
+ QQuaternion rotation;
+
+ float pitch = 0.0f;
+ float roll = 0.0f;
+ float yaw = 0.0f;
+
+ float linear[3] = {0.0f, 0.0f, 0.0f};
+
+ uint8_t QuatAccuracy = 0, QuatRadianAccuracy = 0, LinAccelAccuracy = 0, calibrationComplete = 0; //Состояние калибровки датчика
+
+};
+
+//Настройка приёмника на протокол передачи UBX NAV-PVT NEO M8N
+const char UBLOX_INIT[] = {
+  // Disable NMEA
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x23,// GxGGA выкл
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x2A,// GxGLL выкл
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x31,// GxGSA выкл
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x38,// GxGSV выкл
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x3F,// GxRMC выкл
+  0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x46,// GxVTG выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x05,0x4D,// GxGRS выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x54,// GxGST выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x07,0x5B,// GxZDA выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x62,// GxGBS выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x0A,0x00,0x00,0x00,0x00,0x00,0x00,0x09,0x69,// GxDTM выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x0D,0x00,0x00,0x00,0x00,0x00,0x00,0x0C,0x7E,// GxGNS выкл
+//0xB5,0x62,0x06,0x01,0x08,0x00,0xF0,0x0F,0x00,0x00,0x00,0x00,0x00,0x00,0x0E,0x8C,// GxVLW выкл
+
+  // Disable
+    0xB5,0x62,0x06,0x16,0x08,0x00,0x00,0x03,0x03,0x00,0x89,0xA3,0x07,0x00,0x5D,0xCC, // SBAS выкл
+
+  // Disable UBX
+    0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x17,0xDC, //NAV-PVT выкл
+//  0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x12,0xB9, //NAV-POSLLH выкл
+//  0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x32,0x00,0x00,0x00,0x00,0x00,0x00,0x42,0x09, //NAV-SBAS выкл
+//  0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x13,0xC0, //NAV-STATUS выкл
+//  0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0xFB, //NAV-SVINFO выкл
+
+  // Enable UBX
+   0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x18,0xE1, //NAV-PVT UART вкл
+ //0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x06,0x00,0x01,0x00,0x00,0x00,0x00,0x17,0xDA,  //NAV_SOL UART вкл
+
+  // Rate
+   0xB5,0x62,0x06,0x08,0x06,0x00,0xC8,0x00,0x01,0x00,0x01,0x00,0xDE,0x6A, //5Hz
+ //0xB5,0x62,0x06,0x08,0x06,0x00,0x64,0x00,0x01,0x00,0x01,0x00,0x7A,0x12, //10Hz
+ //0xB5,0x62,0x06,0x08,0x06,0x00,0x50,0x00,0x01,0x00,0x01,0x00,0x66,0x9A,  //12.50Hz
+ //0xB5,0x62,0x06,0x08,0x06,0x00,0x48,0x00,0x01,0x00,0x01,0x00,0x5E,0x6A,  //13.89Hz
+ //0xB5,0x62,0x06,0x08,0x06,0x00,0x40,0x00,0x01,0x00,0x01,0x00,0x56,0x3A,  //15.63Hz
+ //0xB5,0x62,0x06,0x08,0x06,0x00,0x3C,0x00,0x01,0x00,0x01,0x00,0x52,0x22,  //16.67Hz
+
+
+
+ //0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0xC2,0x01,0x00,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0xF6,0xFA, //Конфигурация протоколов вывода в UART и скорости 115200
+ //0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0xC2,0x01,0x00,0x23,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0xDC,0x5E,
+   0xB5,0x62,0x06,0x00,0x14,0x00,0x01,0x00,0x00,0x00,0xD0,0x08,0x00,0x00,0x00,0xC2,0x01,0x00,0x01,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0xB8,0x42 //Конфигурация протоколов вывода в UART и скорости 115200 хотя использутся USB
+};
+#endif //GPS_H
